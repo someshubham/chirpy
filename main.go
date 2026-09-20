@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -89,12 +90,14 @@ func main() {
 			return
 		}
 
+		cleanedBody := cleanBody(prm.Body)
+
 		type returnVal struct {
-			Valid bool `json:"valid"`
+			CleanedBody string `json:"cleaned_body"`
 		}
 
 		resBody := returnVal{
-			Valid: true,
+			CleanedBody: cleanedBody,
 		}
 
 		dat, err := json.Marshal(resBody)
@@ -122,4 +125,30 @@ func writeError(w http.ResponseWriter, msg string) {
 	}
 	w.WriteHeader(400)
 	w.Write(dat)
+}
+
+func cleanBody(body string) string {
+	profaneWords := []string{
+		"kerfuffle",
+		"sharbert",
+		"fornax",
+	}
+	words := strings.Split(body, " ")
+	cleanBody := make([]string, 0)
+	for _, word := range words {
+		isProfane := false
+		for _, profane := range profaneWords {
+			if strings.Compare(strings.ToLower(word), profane) == 0 {
+				isProfane = true
+				break
+			}
+		}
+
+		if isProfane {
+			cleanBody = append(cleanBody, "****")
+		} else {
+			cleanBody = append(cleanBody, word)
+		}
+	}
+	return strings.Join(cleanBody, " ")
 }
