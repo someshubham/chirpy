@@ -50,13 +50,7 @@ func (a *apiConfig) handlePostChirp() func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		chirp := data.Chirp{
-			ID:        dbChirp.ID,
-			CreatedAt: dbChirp.CreatedAt,
-			UpdatedAt: dbChirp.UpdatedAt,
-			Body:      dbChirp.Body,
-			UserID:    dbChirp.UserID,
-		}
+		chirp := data.NewChirpFromDB(dbChirp)
 
 		dat, err := json.Marshal(chirp)
 		if err != nil {

@@ -50,6 +50,7 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.metricReset())
 	mux.HandleFunc("POST /api/users", apiCfg.addUsers())
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlePostChirp())
+	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetAllChirps())
 
 	// FE facing
 	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
