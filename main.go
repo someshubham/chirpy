@@ -51,6 +51,7 @@ func main() {
 	mux.HandleFunc("POST /api/users", apiCfg.addUsers())
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlePostChirp())
 	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetAllChirps())
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handleGetChirpById())
 
 	// FE facing
 	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
