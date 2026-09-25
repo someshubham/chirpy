@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/someshubham/chirpy/data"
+	"github.com/someshubham/chirpy/internal/auth"
 	"github.com/someshubham/chirpy/internal/database"
 )
 
@@ -27,9 +27,15 @@ func (a *apiConfig) handlePostChirp() func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		u, err := uuid.Parse(prm.UserId)
+		token, err := auth.GetBearerToken(r.Header)
 		if err != nil {
-			writeError(w, "Unable to parse UUID")
+			writeError(w, err.Error())
+			return
+		}
+
+		userUuid, err := auth.ValidateJWT(token, a.tokenSecret)
+		if err != nil {
+			w.WriteHeader(401)
 			return
 		}
 
@@ -42,7 +48,7 @@ func (a *apiConfig) handlePostChirp() func(w http.ResponseWriter, r *http.Reques
 
 		dbChirp, err := a.db.CreateChirp(r.Context(), database.CreateChirpParams{
 			Body:   cleanedBody,
-			UserID: u,
+			UserID: userUuid,
 		})
 
 		if err != nil {

@@ -11,6 +11,7 @@ import (
 
 type apiConfig struct {
 	platform       string
+	tokenSecret    string
 	fileServerHits atomic.Int32
 	db             *database.Queries
 }

@@ -2,11 +2,16 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
+
+const authHeader = "Authorization"
+const bearerString = "Bearer"
 
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
 
@@ -40,4 +45,20 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	}
 
 	return u, nil
+}
+
+func GetBearerToken(headers http.Header) (string, error) {
+	bearerAuthString := headers.Get(authHeader)
+
+	bearerAuthList := strings.Fields(bearerAuthString)
+
+	if len(bearerAuthList) < 2 {
+		return "", fmt.Errorf("Incorrect bearer token %s", bearerAuthString)
+	}
+
+	if strings.Compare(bearerAuthList[0], bearerString) != 0 {
+		return "", fmt.Errorf("Incorrect bearer name %s", bearerAuthString)
+	}
+
+	return bearerAuthList[1], nil
 }
