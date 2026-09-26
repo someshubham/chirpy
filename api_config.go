@@ -105,6 +105,35 @@ func (a *apiConfig) handleRefreshToken() func(w http.ResponseWriter, r *http.Req
 		}
 		w.WriteHeader(200)
 		w.Write(dat)
+	}
+}
 
+func (a *apiConfig) revokeRefeshToken() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token, err := auth.GetBearerToken(r.Header)
+		if err != nil {
+			writeError(w, err.Error())
+			return
+		}
+
+		refreshTokenData, err := a.db.GetUserIdFromRefreshToken(r.Context(), token)
+		if err != nil || refreshTokenData.RevokedAt.Valid {
+			w.WriteHeader(401)
+			return
+		}
+
+		if refreshTokenData.ExpiresAt.Before(time.Now()) {
+			w.WriteHeader(401)
+			return
+		}
+
+		err = a.db.RevokeRefreshToken(r.Context(), refreshTokenData.UserID)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Unable to revoke the refresh token"))
+			return
+		}
+
+		w.WriteHeader(204)
 	}
 }

@@ -59,6 +59,7 @@ func main() {
 	mux.HandleFunc("POST /api/login", apiCfg.handleUserLogin())
 
 	mux.HandleFunc("POST /api/refresh", apiCfg.handleRefreshToken())
+	mux.HandleFunc("POST /api/revoke", apiCfg.revokeRefeshToken())
 
 	// FE facing
 	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
