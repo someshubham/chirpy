@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/someshubham/chirpy/internal/auth"
+	"github.com/someshubham/chirpy/internal/database"
 )
 
 func (a *apiConfig) handleUserLogin() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		type param struct {
-			Email              string `json:"email"`
-			Password           string `json:"password"`
-			ExpiringTimeSecond string `json:"expires_in_seconds"`
+			Email    string `json:"email"`
+			Password string `json:"password"`
 		}
 
 		decoder := json.NewDecoder(r.Body)
@@ -40,36 +40,41 @@ func (a *apiConfig) handleUserLogin() func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		expireTime := time.Duration(time.Minute * 60)
-
-		if prm.ExpiringTimeSecond != "" {
-			newExpireTime, err := time.ParseDuration(prm.ExpiringTimeSecond + "h")
-			if err == nil {
-				expireTime = newExpireTime
-			}
-		}
-
-		tokenString, err := auth.MakeJWT(usr.ID, a.tokenSecret, expireTime)
+		accessToken, err := auth.MakeJWT(usr.ID, a.tokenSecret, a.accessTokenExpiration)
 		if err != nil {
 			w.WriteHeader(500)
 			w.Write([]byte("Unable to create a auth token " + err.Error()))
 			return
 		}
 
+		refreshTokenData, err := a.db.SaveRefreshToken(r.Context(), database.SaveRefreshTokenParams{
+			Token:     auth.MakeRefreshToken(),
+			ExpiresAt: time.Now().Add(time.Duration(time.Hour * 24 * 60)),
+			UserID:    usr.ID,
+		})
+
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte("Unable to save a refresh token " + err.Error()))
+			return
+		}
+
 		type returnVal struct {
-			ID        string `json:"id"`
-			CreatedAt string `json:"created_at"`
-			UpdatedAt string `json:"updated_at"`
-			Email     string `json:"email"`
-			Token     string `json:"token"`
+			ID           string `json:"id"`
+			CreatedAt    string `json:"created_at"`
+			UpdatedAt    string `json:"updated_at"`
+			Email        string `json:"email"`
+			Token        string `json:"token"`
+			RefreshToken string `json:"refresh_token"`
 		}
 
 		val := returnVal{
-			ID:        usr.ID.String(),
-			CreatedAt: usr.CreatedAt.String(),
-			UpdatedAt: usr.UpdatedAt.String(),
-			Email:     usr.Email,
-			Token:     tokenString,
+			ID:           usr.ID.String(),
+			CreatedAt:    usr.CreatedAt.String(),
+			UpdatedAt:    usr.UpdatedAt.String(),
+			Email:        usr.Email,
+			Token:        accessToken,
+			RefreshToken: refreshTokenData.Token,
 		}
 
 		dat, err := json.Marshal(val)

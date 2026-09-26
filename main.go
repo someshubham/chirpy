@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -31,9 +32,10 @@ func main() {
 	dbQueries := database.New(db)
 
 	apiCfg := apiConfig{
-		db:          dbQueries,
-		platform:    platform,
-		tokenSecret: tokenSecret,
+		db:                    dbQueries,
+		platform:              platform,
+		tokenSecret:           tokenSecret,
+		accessTokenExpiration: time.Duration(time.Minute * 60),
 	}
 
 	mux := http.NewServeMux()
@@ -55,6 +57,8 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetAllChirps())
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handleGetChirpById())
 	mux.HandleFunc("POST /api/login", apiCfg.handleUserLogin())
+
+	mux.HandleFunc("POST /api/refresh", apiCfg.handleRefreshToken())
 
 	// FE facing
 	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
