@@ -1,17 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/someshubham/chirpy/data"
+	"github.com/someshubham/chirpy/internal/database"
 )
 
 func (a *apiConfig) handleGetAllChirps() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		dbChirps, err := a.db.GetAllChirps(r.Context())
+		authorId := r.URL.Query().Get("author_id")
+		dbChirps, err := getChirps(r.Context(), a.db, authorId)
+
 		if err != nil {
 			writeError(w, "Unable to fetch Chirps")
 			return
@@ -58,4 +63,17 @@ func (a *apiConfig) handleGetChirpById() func(w http.ResponseWriter, r *http.Req
 		w.WriteHeader(200)
 		w.Write(dat)
 	}
+}
+
+func getChirps(context context.Context, db *database.Queries, authorId string) ([]database.Chirp, error) {
+	var dbChirps []database.Chirp
+	if authorId != "" {
+		usrId, err := uuid.Parse(authorId)
+		if err != nil {
+			return dbChirps, fmt.Errorf("incorrect input")
+		}
+		return db.GetAllChirpsByAuthor(context, usrId)
+	}
+	return db.GetAllChirps(context)
+
 }

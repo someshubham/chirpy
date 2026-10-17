@@ -19,6 +19,7 @@ type apiConfig struct {
 	accessTokenExpiration time.Duration
 	fileServerHits        atomic.Int32
 	db                    *database.Queries
+	polkaKey              string
 }
 
 func (a *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {

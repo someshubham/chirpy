@@ -66,6 +66,7 @@ func (a *apiConfig) handleUserLogin() func(w http.ResponseWriter, r *http.Reques
 			Email        string `json:"email"`
 			Token        string `json:"token"`
 			RefreshToken string `json:"refresh_token"`
+			IsChirpyRed  bool   `json:"is_chirpy_red"`
 		}
 
 		val := returnVal{
@@ -75,6 +76,7 @@ func (a *apiConfig) handleUserLogin() func(w http.ResponseWriter, r *http.Reques
 			Email:        usr.Email,
 			Token:        accessToken,
 			RefreshToken: refreshTokenData.Token,
+			IsChirpyRed:  usr.IsChirpyRed,
 		}
 
 		dat, err := json.Marshal(val)

@@ -22,6 +22,7 @@ func main() {
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
 	tokenSecret := os.Getenv("TOKEN_SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -36,6 +37,7 @@ func main() {
 		platform:              platform,
 		tokenSecret:           tokenSecret,
 		accessTokenExpiration: time.Duration(time.Minute * 60),
+		polkaKey:              polkaKey,
 	}
 
 	mux := http.NewServeMux()
@@ -62,6 +64,9 @@ func main() {
 
 	mux.HandleFunc("POST /api/refresh", apiCfg.handleRefreshToken())
 	mux.HandleFunc("POST /api/revoke", apiCfg.revokeRefeshToken())
+
+	// webhook
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.webhookPolka())
 
 	// FE facing
 	mux.Handle("/app", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
