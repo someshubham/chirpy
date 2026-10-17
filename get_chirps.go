@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/someshubham/chirpy/data"
@@ -15,6 +16,8 @@ import (
 func (a *apiConfig) handleGetAllChirps() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authorId := r.URL.Query().Get("author_id")
+		sortMethod := r.URL.Query().Get("sort")
+
 		dbChirps, err := getChirps(r.Context(), a.db, authorId)
 
 		if err != nil {
@@ -25,6 +28,12 @@ func (a *apiConfig) handleGetAllChirps() func(w http.ResponseWriter, r *http.Req
 		var chirps []data.Chirp
 		for _, dbChirp := range dbChirps {
 			chirps = append(chirps, data.NewChirpFromDB(dbChirp))
+		}
+
+		if sortMethod == "desc" {
+			sort.Slice(chirps, func(i, j int) bool {
+				return chirps[i].CreatedAt.After(chirps[j].CreatedAt)
+			})
 		}
 
 		dat, err := json.Marshal(chirps)
